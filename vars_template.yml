@@ -1,29 +1,24 @@
 ---
-#Credentials for connecting
-lightSailSecretKey: xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
-lightSailKeyID: xxxxxxxxxxxxxxxxxxxx
-ansible_ssh_private_key_file: ~/location/toPemFile
 
-# Details about the VPS
-# I have chosen eu-west-2, but you can find
-region: eu-west-2
-zone: eu-west-2a
-blueprint: ubuntu_20_04
-bundle: nano_1_0
+# Administrator information
+email: MYADMINEMAIL@DOMAIN.COM #REPLACE***
 
-# Subdomain
-instance_name: ansible_test_instance
-static_ip_name: ansible_test_ip
-
-
-domain: example.com
-subdomain: test.example.com
-
-# Name of the keypair on your laptop that you will use to
-# connect to the instance
-keyPair: yourKeyPair
-
-email: test@email.com
-
-certbot_package: "python3-certbot-apache"
+# Dependency for certbot
+certbot_package: "python3-certbot-nginx"
 certbot_plugin: "nginx"
+
+# Information for the authenticator server
+authenticator_repo: https://github.com/l-gorman/rhomis-authenticator
+authenticator_dest: path/where/storing/authenticator #REPLACE***
+authenticator_staging_url: AUTHENTICATORSTAGINGDOMAIN.com #REPLACE***
+authenticator_prod_url: AUTHENTICATORPRODUCTIONDOMAIN.com #REPLACE***
+
+# Information for the api repository
+api_repo: https://github.com/l-gorman/rhomis-api
+api_dest: path/where/storing/data-api #REPLACE***
+api_staging_url: APISTAGINGDOMAIN.com #REPLACE***
+api_prod_url: APIPRODUCTIONDOMAIN #REPLACE***
+
+# Server R-scripts
+server_r_scripts: https://github.com/l-gorman/rhomis-server-R-scripts
+server_scripts_dest: path/where/storing/r-scripts #REPLACE***
