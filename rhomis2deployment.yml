@@ -1,0 +1,183 @@
+---
+# Connect to an instance, install the necessary software, run tests, and deploy
+- hosts: 'staging:&servers'
+  become: yes
+  vars_files: 
+    - vars.yml
+ 
+  tasks:
+#---------------------------------------------------------
+# Install software
+#---------------------------------------------------------
+    - name: Run the equivalent of "apt-get update" as a separate step
+      apt:
+        update_cache: yes
+      tags:
+        - update
+        - start_mongodb
+        - install_mongodb_package
+        - install_packages
+
+    - name: Install reqired packages
+      apt: name={{ item }} state=present
+      with_items:
+        - curl
+        - wget
+        - nginx
+        - nodejs
+        - npm
+        - gnupg
+      tags:
+        - install_packages
+
+#-----------------------------------------------------------
+# Install and Start MongoDb
+#-----------------------------------------------------------
+    - name: Import Public key
+      apt_key:
+        state: present
+        url: https://www.mongodb.org/static/pgp/server-5.0.asc 
+      tags:
+        - apt_key
+        - start_mongodb
+        - install_packages
+
+    - name: Create a list file for MongoDB
+      command: echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/5.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-5.0.list
+      tags:
+        - start_mongodb
+
+    - name: Reload local packages
+      command: sudo apt-get update
+      tags:
+        - start_mongodb
+        - install_packages
+
+    - name: Add MongoDB repository
+      apt_repository: repo='deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/5.0 multiverse' state=present
+      tags:
+        - install_mongodb_package
+        - start_mongodb
+        - install_packages
+
+    - name: Install the MongoDB packages  
+      apt: name={{ item }} state=latest
+      with_items:
+        - mongodb-org
+      tags:
+        - install_mongodb_package
+        - start_mongodb
+        - install_packages
+
+    - name: Start MongoDB
+      systemd: 
+        state: started
+        name: mongod
+      tags:
+        - start_app
+        - start_mongodb
+        - install_packages
+#---------------------------------------------------------
+# Installing the Authenticator
+#---------------------------------------------------------   
+    - name: Clone authenticator api
+      git:
+        repo: 'https://github.com/l-gorman/rhomis-authenticator'
+        dest: /home/ubuntu/rhomis-authenticator
+      tags:
+        - clone_authenticator
+
+    - name: Copy .env file
+      copy:
+        src: .env
+        dest: /home/ubuntu/rhomis-authenticator/.env
+      tags:
+        - copy_env
+        - clone_authenticator
+    
+    - name: Install packages based on package.json using the npm
+      npm:
+        path: /home/ubuntu/rhomis-authenticator 
+        state: present
+      tags:
+        - install_dependencies
+
+    - name: install Pm2
+      command: npm install pm2 -g
+      tags:
+        - install_dependencies
+
+    - name: Delete old pm2 instances
+      become_user: ubuntu
+      command: pm2 delete auth-api
+      ignore_errors: yes
+      tags:
+        - start_app
+
+    - name: Start the application
+      become_user: ubuntu
+      # command: pm2 start /home/ubuntu/rhomis-authenticator/app.js --name node-app
+      command: /home/ubuntu/rhomis-authenticator/node_modules/.bin/cross-env NODE_ENV=prod pm2 start /home/ubuntu/rhomis-authenticator/app.js --name "auth-api"
+      tags:
+        - start_app
+
+#----------------------------------------------------------
+# Setting up NGINX and obtaining certificates
+#----------------------------------------------------------
+
+    - name : Install Python Package
+      apt: 
+        name: python3 
+        state: latest
+        update_cache: yes     
+      tags:
+        - install_python
+        - obtain_ssl
+ 
+    - name : Install Let's Encrypt Package
+      apt:
+        name: "{{ certbot_package }}" 
+        update_cache: yes
+        state: latest
+      tags:
+        - install_lets_encrypt
+        - obtain_ssl
+
+    - name: Create and Install Cert Using {{ certbot_plugin }} Plugin
+      command: "certbot --{{ certbot_plugin }} -d  {{ subdomain }} -m {{ email }} --agree-tos --noninteractive --redirect"
+      tags:
+        - obtain_ssl
+
+    - name: Renew certbot
+      command: "certbot renew --cert-name {{subdomain}}"
+      tags:
+        - renew_certificate
+
+    - name: Renew certbot
+      command: "certbot renew --cert-name {{subdomain}} --dry-run"
+      tags:
+        - renew_certificate_dry_run
+    
+    - name: Copy nginx template
+      copy:
+        src: nginx_conf
+        dest: /etc/nginx/sites-available/default
+      tags:
+        - copy_nginx_file
+        
+    
+    - name: Replace the example domain name
+      replace:
+        path: /etc/nginx/sites-available/default
+        regexp: EXAMPLEDOMAIN
+        replace: "{{subdomain}}"
+
+      tags:
+        - substitute_domains
+        - copy_nginx_file
+      
+    - name: Restart nginx
+      command: "systemctl restart nginx"
+      tags:
+        - restart_nginx
+        - copy_nginx_file

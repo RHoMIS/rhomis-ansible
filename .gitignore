@@ -1,0 +1,5 @@
+vars.yml
+inventory
+.env
+inventory.yml
+writeFakeFile.yml
