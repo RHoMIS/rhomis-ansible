@@ -134,6 +134,7 @@
       tags:
         - copy_env
         - clone_authenticator
+        - setup_authenticator
  
     - name: Copy api environment file
       copy:
@@ -142,6 +143,7 @@
       tags:
         - copy_env
         - clone_api
+        - setup_api
     
     - name: Install packages based on package.json using the npm
       npm:
@@ -151,24 +153,57 @@
         - install_dependencies
         - setup_authenticator
 
+    - name: Install packages based on package.json using the npm
+      npm:
+        path: '{{api_dest}}' 
+        state: present
+      tags:
+        - install_dependencies
+        - setup_api
+
+
     - name: install Pm2
       command: npm install pm2 -g
       tags:
         - install_dependencies
+        - setup_api
+        - setup_authenticator
 
-    - name: Delete old pm2 instances
+    - name: Delete old authenticator pm2 instances
       become_user: ubuntu
       command: pm2 delete auth-api
       ignore_errors: yes
       tags:
         - start_app
+        - start_authenticator
+
+
+
+    - name: Start authenticator pm2 instance
+      become_user: ubuntu
+      # command: pm2 start /home/ubuntu/rhomis-authenticator/app.js --name node-app
+      command: '{{auth_dest}}/node_modules/.bin/cross-env NODE_ENV=prod pm2 start {{auth_dest}}/app.js --name "auth-api"'
+      tags:
+        - start_authenticator
+
+
+    - name: Delete old api pm2 instances
+      become_user: ubuntu
+      command: pm2 delete data-api
+      ignore_errors: yes
+      tags:
+        - start_data_api
+
+
 
     - name: Start the application
       become_user: ubuntu
       # command: pm2 start /home/ubuntu/rhomis-authenticator/app.js --name node-app
-      command: /home/ubuntu/rhomis-authenticator/node_modules/.bin/cross-env NODE_ENV=prod pm2 start /home/ubuntu/rhomis-authenticator/app.js --name "auth-api"
+      command: '{{api_dest}}/node_modules/.bin/cross-env NODE_ENV=prod pm2 start {{api_dest}}/app.js --name "data-api"'
       tags:
-        - start_app
+        - start_data_api
+
+
 
 #----------------------------------------------------------
 # Setting up NGINX and obtaining certificates
@@ -180,8 +215,8 @@
         state: latest
         update_cache: yes     
       tags:
-        - install_python
-        - obtain_ssl
+        - setup_api
+        - setup_authenticator
  
     - name : Install Let's Encrypt Package
       apt:
@@ -189,44 +224,50 @@
         update_cache: yes
         state: latest
       tags:
-        - install_lets_encrypt
-        - obtain_ssl
+        - setup_api
+        - setup_authenticator
 
-    - name: Create and Install Cert Using {{ certbot_plugin }} Plugin
-      command: "certbot --{{ certbot_plugin }} -d  {{ subdomain }} -m {{ email }} --agree-tos --noninteractive --redirect"
+    - name: Create and Install Cert for Authenticor Staging Platform Using {{ certbot_plugin }} Plugin
+      command: "certbot --{{ certbot_plugin }} -d  {{ inventory_hostname }} -m {{ email }} --agree-tos --noninteractive --redirect"
       tags:
-        - obtain_ssl
+        - setup_authenticator
+        - setup_api
 
     - name: Renew certbot
-      command: "certbot renew --cert-name {{subdomain}}"
+      command: "certbot renew --cert-name {{inventory_hostname}}"
       tags:
         - renew_certificate
 
     - name: Renew certbot
-      command: "certbot renew --cert-name {{subdomain}} --dry-run"
+      command: "certbot renew --cert-name {{inventory_hostname}} --dry-run"
       tags:
         - renew_certificate_dry_run
     
     - name: Copy nginx template
       copy:
-        src: nginx_conf
+        src: ./config_files/nginx_conf
         dest: /etc/nginx/sites-available/default
       tags:
         - copy_nginx_file
-        
-    
+        - setup_authenticator
+        - setup_api
+            
     - name: Replace the example domain name
       replace:
         path: /etc/nginx/sites-available/default
         regexp: EXAMPLEDOMAIN
-        replace: "{{subdomain}}"
+        replace: "{{inventory_hostname}}"
 
       tags:
         - substitute_domains
         - copy_nginx_file
+        - setup_authenticator
+        - setup_api
       
     - name: Restart nginx
       command: "systemctl restart nginx"
       tags:
         - restart_nginx
         - copy_nginx_file
+        - setup_authenticator
+        - setup_api

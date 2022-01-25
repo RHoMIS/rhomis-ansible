@@ -51,5 +51,7 @@ all:
         api.rhomis.cgiar.org:
         auth.rhomis.cgiar.org:
         rhomis.cgiar.org:
+      vars:
+        ansible_user: 'lgorman'
 
 
