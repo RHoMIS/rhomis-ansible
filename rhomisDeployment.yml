@@ -4,7 +4,6 @@
   become: yes
   vars_files: 
     - vars.yml
- 
   tasks:
 #---------------------------------------------------------
 # Install software
@@ -13,6 +12,8 @@
       apt:
         update_cache: yes
       tags:
+        - setup_authenticator
+        - setup_api
         - update
         - start_mongodb
         - install_mongodb_package
@@ -29,6 +30,17 @@
         - gnupg
       tags:
         - install_packages
+        - setup_authenticator
+        - setup_api
+
+    - name: Install R
+      apt: name={{ item }} state=present
+      with_items:
+        - r-base
+        - build-essential
+      tags:
+        - install_r
+        - setup_api
 
 #-----------------------------------------------------------
 # Install and Start MongoDb
@@ -41,17 +53,27 @@
         - apt_key
         - start_mongodb
         - install_packages
+        - setup_authenticator
+        - setup_api
+
+       
 
     - name: Create a list file for MongoDB
       command: echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/5.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-5.0.list
       tags:
         - start_mongodb
+        - setup_authenticator
+        - setup_api
 
+ 
     - name: Reload local packages
       command: sudo apt-get update
       tags:
         - start_mongodb
         - install_packages
+        - setup_authenticator
+        - setup_api
+
 
     - name: Add MongoDB repository
       apt_repository: repo='deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/5.0 multiverse' state=present
@@ -59,6 +81,9 @@
         - install_mongodb_package
         - start_mongodb
         - install_packages
+        - setup_authenticator
+        - setup_api
+
 
     - name: Install the MongoDB packages  
       apt: name={{ item }} state=latest
@@ -68,6 +93,9 @@
         - install_mongodb_package
         - start_mongodb
         - install_packages
+        - setup_authenticator
+        - setup_api
+
 
     - name: Start MongoDB
       systemd: 
@@ -77,30 +105,51 @@
         - start_app
         - start_mongodb
         - install_packages
-#---------------------------------------------------------
-# Installing the Authenticator
+        - setup_authenticator
+        - setup_api
+
+#--------------------------------------------------------
+# Installing Scripts
 #---------------------------------------------------------   
     - name: Clone authenticator api
       git:
-        repo: 'https://github.com/l-gorman/rhomis-authenticator'
-        dest: /home/ubuntu/rhomis-authenticator
+        repo: '{{authenticator_repo}}'
+        dest: '{{authenticator_dest}}'
       tags:
         - clone_authenticator
+        - setup_authenticator
 
-    - name: Copy .env file
+    - name: Clone data api
+      git:
+        repo: '{{api_repo}}'
+        dest: '{{api_dest}}'
+      tags:
+        - clone_api
+        - setup_api
+
+    - name: Copy authenticator environment file
       copy:
-        src: .env
-        dest: /home/ubuntu/rhomis-authenticator/.env
+        src: ./config_files/authenticator/.env
+        dest: '{{authenticator_dest}}.env'
       tags:
         - copy_env
         - clone_authenticator
+ 
+    - name: Copy api environment file
+      copy:
+        src: ./config_files/data_api/.env
+        dest: '{{api_dest}}.env'
+      tags:
+        - copy_env
+        - clone_api
     
     - name: Install packages based on package.json using the npm
       npm:
-        path: /home/ubuntu/rhomis-authenticator 
+        path: '{{authenticator_dest}}' 
         state: present
       tags:
         - install_dependencies
+        - setup_authenticator
 
     - name: install Pm2
       command: npm install pm2 -g

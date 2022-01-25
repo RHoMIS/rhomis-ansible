@@ -1,0 +1,26 @@
+---
+# connect to the instance
+keyPair: ATI_WSL_laptop
+
+# Administrator information
+email: leomgorman@outlook.com
+
+# Dependency for certbot
+certbot_package: "python3-certbot-nginx"
+certbot_plugin: "nginx"
+
+# Information for the authenticator server
+authenticator_repo: https://github.com/l-gorman/rhomis-authenticator
+authenticator_dest: /home/ubuntu/rhomis-authenticator
+authenticator_staging_url: auth.l-gorman.com
+authenticator_prod_url: auth.rhomis.cgiar.org
+
+# Information for the api repository
+api_repo: https://github.com/l-gorman/rhomis-api
+api_dest: /home/ubuntu/rhomis-data-api
+api_staging_url: api.l-gorman.com
+api_prod_url: api.rhomis.cgiar.org
+
+# Server R-scripts
+server_r_scripts: https://github.com/l-gorman/rhomis-server-R-scripts
+server_scripts_dest: /home/ubuntu/rhomis-server-R-scripts

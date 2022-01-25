@@ -1,0 +1,55 @@
+all:
+  hosts:
+    # Staging domains
+    api.l-gorman.com:
+      ansible_host: 3.9.231.80
+      ansible_user: 'ubuntu'
+    auth.l-gorman.com:
+      ansible_host: 18.169.223.243
+      ansible_user: ubuntu
+    app.l-gorman.com:
+
+    # Production domains
+    api.rhomis.cgiar.org:
+    auth.rhomis.cgiar.org:
+    rhomis.cgiar.org:
+
+  children:
+    authservers: 
+      hosts: 
+        auth.l-gorman.com:
+        auth.rhomis-cgiar.org:
+
+    dataservers:
+      hosts: 
+        api.l-gorman.com:
+        api.rhomis.cgiar.org:
+
+    servers:
+      hosts:
+        auth.l-gorman.com:
+        auth.rhomis-cgiar.org:
+        api.l-gorman.com:
+        api.rhomis.cgiar.org:
+
+
+    apphost:
+        app.l-gorman.com:
+        rhomis.cgiar.org:
+    
+    staging:
+      hosts:
+        api.l-gorman.com:
+        auth.l-gorman.com:
+        app.l-gorman.com:
+      vars:
+        ansible_user: 'ubuntu'
+        ansible_ssh_private_key_file: '~/credentials/lightsail_ati_wsl.pem'
+    
+    production:
+      hosts:
+        api.rhomis.cgiar.org:
+        auth.rhomis.cgiar.org:
+        rhomis.cgiar.org:
+
+
