@@ -2,11 +2,9 @@ all:
   hosts:
     # Staging domains
     api.l-gorman.com:
-      ansible_host: 3.9.231.80
-      ansible_user: 'ubuntu'
+      ansible_host: 35.176.121.18
     auth.l-gorman.com:
-      ansible_host: 18.169.223.243
-      ansible_user: ubuntu
+      ansible_host: 18.168.88.39
     app.l-gorman.com:
 
     # Production domains
@@ -31,8 +29,7 @@ all:
         auth.rhomis-cgiar.org:
         api.l-gorman.com:
         api.rhomis.cgiar.org:
-
-
+        
     apphost:
         app.l-gorman.com:
         rhomis.cgiar.org:

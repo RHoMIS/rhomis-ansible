@@ -1,6 +1,6 @@
 ---
 # Connect to an instance, install the necessary software, run tests, and deploy
-- hosts: 'staging:&servers'
+- hosts: 'all'
   become: yes
   vars_files: 
     - vars.yml
@@ -18,6 +18,8 @@
         - start_mongodb
         - install_mongodb_package
         - install_packages
+        - install_system_dependencies
+        - install_r
 
     - name: Install reqired packages
       apt: name={{ item }} state=present
@@ -28,16 +30,23 @@
         - nodejs
         - npm
         - gnupg
+        
       tags:
         - install_packages
         - setup_authenticator
         - setup_api
+        - install_system_dependencies
 
     - name: Install R
       apt: name={{ item }} state=present
       with_items:
         - r-base
         - build-essential
+        # Some necessary dependencies for some of the R packages
+        - libcurl4-openssl-dev
+        - libxml2-dev
+        - libssl-dev 
+        - libsasl2-dev
       tags:
         - install_r
         - setup_api
@@ -127,19 +136,41 @@
         - clone_api
         - setup_api
 
+    - name: Clone server R scripts
+      git:
+        repo: '{{server_r_scripts_repo}}'
+        dest: '{{server_r_scripts_dest}}'
+      when: 'inventory_hostname == api_staging_url|string'
+
+      tags:
+        - clone_api
+        - setup_api
+        - clone_r_scripts
+
+    - name: Install R packages
+      command: "Rscript ./R/setup.R"
+      args:
+        chdir: "{{server_r_scripts_dest}}"
+      when: 'inventory_hostname == api_staging_url|string'
+      tags:
+        - clone_api
+        - setup_api
+        - clone_r_scripts
+
     - name: Copy authenticator environment file
       copy:
         src: ./config_files/authenticator/.env
-        dest: '{{authenticator_dest}}.env'
+        dest: '{{authenticator_dest}}/.env'
       tags:
         - copy_env
         - clone_authenticator
         - setup_authenticator
+        - clone_authenticator_env
  
     - name: Copy api environment file
       copy:
         src: ./config_files/data_api/.env
-        dest: '{{api_dest}}.env'
+        dest: '{{api_dest}}/.env'
       tags:
         - copy_env
         - clone_api
@@ -182,9 +213,13 @@
     - name: Start authenticator pm2 instance
       become_user: ubuntu
       # command: pm2 start /home/ubuntu/rhomis-authenticator/app.js --name node-app
-      command: '{{auth_dest}}/node_modules/.bin/cross-env NODE_ENV=prod pm2 start {{auth_dest}}/app.js --name "auth-api"'
+      command: './node_modules/.bin/cross-env NODE_ENV=production pm2 start ./app.js --name "auth-api"'
+      args:
+        chdir: '{{authenticator_dest}}'
       tags:
         - start_authenticator
+
+    
 
 
     - name: Delete old api pm2 instances
@@ -199,7 +234,9 @@
     - name: Start the application
       become_user: ubuntu
       # command: pm2 start /home/ubuntu/rhomis-authenticator/app.js --name node-app
-      command: '{{api_dest}}/node_modules/.bin/cross-env NODE_ENV=prod pm2 start {{api_dest}}/app.js --name "data-api"'
+      command: './node_modules/.bin/cross-env NODE_ENV=prod pm2 start ./app.js --name "data-api"'
+      args:
+        chdir: '{{api_dest}}'
       tags:
         - start_data_api
 
@@ -263,7 +300,33 @@
         - copy_nginx_file
         - setup_authenticator
         - setup_api
-      
+
+    - name: Replace the port name for the authenticator
+      replace:
+        path: /etc/nginx/sites-available/default
+        regexp: EXAMPLEPORT
+        replace: "3002"
+      when: inventory_hostname == "{{authenticator_staging_url}}"
+      tags:
+        - substitute_domains
+        - copy_nginx_file
+        - setup_authenticator
+    
+    - name: Replace the port name
+      replace:
+        path: /etc/nginx/sites-available/default
+        regexp: EXAMPLEPORT
+        replace: "3001"
+      when: inventory_hostname == "{{api_staging_url}}"
+
+
+      tags:
+        - substitute_domains
+        - copy_nginx_file
+        - setup_api
+
+
+
     - name: Restart nginx
       command: "systemctl restart nginx"
       tags:

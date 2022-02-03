@@ -5,6 +5,10 @@ This repository contains scripts needed to setup, update, test, and deploy the c
 
 ## Setup
 
+Installation of ansible was done using [this guide](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
+
+
+
 ### Domain
 
 * Pick a domain name for both your staging site, and your production site. Setup the domain name, and add the named servers of your VPS provider.
@@ -77,3 +81,5 @@ This repository contains scripts needed to setup, update, test, and deploy the c
 * See [here](https://www.digitalocean.com/community/tutorials/how-to-set-up-ansible-inventories) for a guide on Ansible inventories
 
 * See this [tutorial](https://linuxbuz.com/linuxhowto/install-letsencrypt-ssl-ansible) for managing ssl certificates with ansible
+
+* CI [tutorial](https://dev.to/knowbee/how-to-setup-continuous-deployment-of-a-website-on-a-vps-using-github-actions-54im)
