@@ -14,3 +14,5 @@ jobs:
         PORT: ${{ secrets.PORT }}
         KEY: ${{ secrets.SSHKEY }}
         script: cd rhomis-ansible && git pull https://github.com/l-gorman/rhomis-ansible.git
+
+        

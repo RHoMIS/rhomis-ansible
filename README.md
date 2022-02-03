@@ -5,9 +5,9 @@ This repository contains scripts needed to setup, update, test, and deploy the c
 
 ## Setup
 
-Installation of ansible was done using [this guide](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html)
+Installation of ansible was done using [this guide](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html). You need to generate ssh-key pairs so that you can deploy to each of the servers.
 
-
+You need to ensure that you can ssh to each of your hosts from the ansible vps. To do this, generate an ssh key on the ansible machine. Copy the public ssh key. Add it to the authorized key files for each of your deployments. See here for guidance on ssh key: (https://www.digitalocean.com/community/tutorials/how-to-configure-ssh-key-based-authentication-on-a-linux-server)
 
 ### Domain
 

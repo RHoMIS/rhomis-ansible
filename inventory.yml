@@ -29,7 +29,7 @@ all:
         auth.rhomis-cgiar.org:
         api.l-gorman.com:
         api.rhomis.cgiar.org:
-        
+
     apphost:
         app.l-gorman.com:
         rhomis.cgiar.org:
@@ -41,7 +41,6 @@ all:
         app.l-gorman.com:
       vars:
         ansible_user: 'ubuntu'
-        ansible_ssh_private_key_file: '~/credentials/lightsail_ati_wsl.pem'
     
     production:
       hosts:
