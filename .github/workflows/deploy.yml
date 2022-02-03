@@ -3,7 +3,7 @@ on: [push]
 jobs:
 
   build:
-    name: Build
+    name: Update scripts 
     runs-on: ubuntu-latest
     steps:
     - name: executing remote ssh commands using password
@@ -13,4 +13,4 @@ jobs:
         USERNAME: ${{ secrets.USERNAME }}
         PORT: ${{ secrets.PORT }}
         KEY: ${{ secrets.SSHKEY }}
-        script: echo "github actions file" >> actions_file.txt
+        script: cd rhomis-ansible && git pull https://github.com/l-gorman/rhomis-ansible.git
