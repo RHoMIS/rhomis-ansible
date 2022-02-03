@@ -83,3 +83,4 @@ Installation of ansible was done using [this guide](https://docs.ansible.com/ans
 * See this [tutorial](https://linuxbuz.com/linuxhowto/install-letsencrypt-ssl-ansible) for managing ssl certificates with ansible
 
 * CI [tutorial](https://dev.to/knowbee/how-to-setup-continuous-deployment-of-a-website-on-a-vps-using-github-actions-54im)
+* Manage git credentials with git credential manager. And vscode git credential manager. See [here](https://stackoverflow.com/questions/46645843/where-to-store-my-git-personal-access-token), [here](https://docs.github.com/en/actions/security-guides/automatic-token-authentication),

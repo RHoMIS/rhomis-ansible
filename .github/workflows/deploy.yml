@@ -13,4 +13,4 @@ jobs:
         USERNAME: ${{ secrets.USERNAME }}
         PORT: ${{ secrets.PORT }}
         KEY: ${{ secrets.SSHKEY }}
-        script: echo "github actions file >> actions_file.txt"
+        script: echo "github actions file" >> actions_file.txt
