@@ -1,0 +1,63 @@
+---
+# Connect to an instance, install the necessary software, run tests, and deploy
+- hosts: 'all'
+  become: yes
+  vars_files: 
+    - vars.yml
+  tasks:
+
+#------------------------------------------------------------------------------
+# Deploy authenticator
+#------------------------------------------------------------------------------
+# Staging
+    - name: Clone staging authenticator api
+      git:
+        repo: '{{authenticator_repo}}'
+        dest: '{{authenticator_dest}}'
+      when: 'inventory_hostname == api_staging_url|string'
+        tags:
+          - clone_staging_authenticator
+
+# Production
+    - name: Clone production authenticator api
+      git:
+        repo: '{{authenticator_repo}}'
+        dest: '{{authenticator_dest}}'
+      when: 'inventory_hostname == api_prod_url|string'
+        tags:
+          - clone_prod_authenticator
+#------------------------------------------------------------------------------
+# Deploy api
+#------------------------------------------------------------------------------
+# Staging
+    - name: Clone data api
+        git:
+          repo: '{{api_repo}}'
+          dest: '{{api_dest}}'
+        tags:
+          - clone_api
+          - setup_api
+
+
+# Production
+
+
+#------------------------------------------------------------------------------
+# Deploy Server R scripts
+#------------------------------------------------------------------------------
+# Staging
+
+
+# Production
+
+#------------------------------------------------------------------------------
+# Update R package on server
+#------------------------------------------------------------------------------
+# Staging
+
+
+# Production
+
+
+
+
