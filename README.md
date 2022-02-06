@@ -9,6 +9,7 @@ Installation of ansible was done using [this guide](https://docs.ansible.com/ans
 
 You need to ensure that you can ssh to each of your hosts from the ansible vps. To do this, generate an ssh key on the ansible machine. Copy the public ssh key. Add it to the authorized key files for each of your deployments. See here for guidance on ssh key: (https://www.digitalocean.com/community/tutorials/how-to-configure-ssh-key-based-authentication-on-a-linux-server)
 
+You need to create files the `config_files/authenticator` directory, and the `config_files/data_api` directory. In these you must create `.env` files which will be used by the RHoMIS authenticator application, and the Data API.
 ### Domain
 
 * Pick a domain name for both your staging site, and your production site. Setup the domain name, and add the named servers of your VPS provider.

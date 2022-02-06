@@ -143,7 +143,6 @@
       when: 'inventory_hostname == api_staging_url|string'
 
       tags:
-        - clone_api
         - setup_api
         - clone_r_scripts
 
@@ -153,7 +152,6 @@
         chdir: "{{server_r_scripts_dest}}"
       when: 'inventory_hostname == api_staging_url|string'
       tags:
-        - clone_api
         - setup_api
         - clone_r_scripts
 
