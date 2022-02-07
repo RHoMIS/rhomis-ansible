@@ -1,22 +1,24 @@
 ---
 # Connect to an instance, install the necessary software, run tests, and deploy
-- hosts: 'all'
+- hosts: "all"
   become: yes
-  vars_files: 
+  vars_files:
     - vars.yml
   tasks:
-#---------------------------------------------------------
-# Install System Dependencies
-#---------------------------------------------------------
+    #---------------------------------------------------------
+    # Install System Dependencies
+    #---------------------------------------------------------
     - name: Run the equivalent of "apt-get update" as a separate step
       apt:
         update_cache: yes
       tags:
-        - setup_authenticator
-        - setup_api
+        - setup_staging_authenticator
+        - setup_staging_api
+        - setup_prod_authenticator
+        - setup_prod_api
         - update
         - install_system_dependencies
-     
+
     - name: Install reqired packages
       apt: name={{ item }} state=present
       with_items:
@@ -26,10 +28,12 @@
         - nodejs
         - npm
         - gnupg
-        
+
       tags:
-        - setup_authenticator
-        - setup_api
+        - setup_staging_authenticator
+        - setup_staging_api
+        - setup_prod_authenticator
+        - setup_prod_api
         - install_system_dependencies
 
     - name: Install R
@@ -40,45 +44,48 @@
         # Some necessary dependencies for some of the R packages
         - libcurl4-openssl-dev
         - libxml2-dev
-        - libssl-dev 
+        - libssl-dev
         - libsasl2-dev
       tags:
         - install_r
-        - setup_api
+        - setup_staging_api
+        - setup_prod_api
 
-#-----------------------------------------------------------
-# Install and Start MongoDb
-#-----------------------------------------------------------
+    #-----------------------------------------------------------
+    # Install and Start MongoDb
+    #-----------------------------------------------------------
     - name: Import Public key
       apt_key:
         state: present
-        url: https://www.mongodb.org/static/pgp/server-5.0.asc 
+        url: https://www.mongodb.org/static/pgp/server-5.0.asc
       tags:
         - apt_key
         - start_mongodb
         - install_system_dependencies
-        - setup_authenticator
-        - setup_api
-
-       
+        - setup_staging_authenticator
+        - setup_staging_api
+        - setup_prod_authenticator
+        - setup_prod_api
 
     - name: Create a list file for MongoDB
       command: echo "deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/5.0 multiverse" | sudo tee /etc/apt/sources.list.d/mongodb-org-5.0.list
       tags:
         - start_mongodb
-        - setup_authenticator
-        - setup_api
+        - setup_staging_authenticator
+        - setup_staging_api
+        - setup_prod_authenticator
+        - setup_prod_api
         - install_system_dependencies
 
- 
     - name: Reload local packages
       command: sudo apt-get update
       tags:
         - start_mongodb
         - install_system_dependencies
-        - setup_authenticator
-        - setup_api
-
+        - setup_staging_authenticator
+        - setup_staging_api
+        - setup_prod_authenticator
+        - setup_prod_api
 
     - name: Add MongoDB repository
       apt_repository: repo='deb [ arch=amd64,arm64 ] https://repo.mongodb.org/apt/ubuntu focal/mongodb-org/5.0 multiverse' state=present
@@ -88,198 +95,330 @@
         - setup_authenticator
         - setup_api
 
-
-    - name: Install the MongoDB packages  
+    - name: Install the MongoDB packages
       apt: name={{ item }} state=latest
       with_items:
         - mongodb-org
       tags:
         - start_mongodb
         - install_packages
-        - setup_authenticator
-        - setup_api
-
+        - setup_staging_authenticator
+        - setup_staging_api
+        - setup_prod_authenticator
+        - setup_prod_api
 
     - name: Start MongoDB
-      systemd: 
+      systemd:
         state: started
         name: mongod
       tags:
         - start_mongodb
         - install_packages
-        - setup_authenticator
-        - setup_api
+        - setup_staging_authenticator
+        - setup_staging_api
+        - setup_prod_authenticator
+        - setup_prod_api
 
-#--------------------------------------------------------
-# Installing Scripts
-#---------------------------------------------------------   
+    #--------------------------------------------------------
+    # Installing Scripts
+    #---------------------------------------------------------
     - name: Clone staging authenticator api
       git:
-        repo: '{{authenticator_repo}}'
-        dest: '{{authenticator_dest}}'
+        repo: "{{authenticator_repo}}"
+        dest: "{{authenticator_dest}}"
+      when: "inventory_hostname == authenticator_staging_url|string"
       tags:
-        - clone_authenticator
-        - setup_authenticator
+        - update_staging_authenticator
+        - setup_staging_authenticator
 
-
-    - name: Clone data api
+    - name: Clone production authenticator api
       git:
-        repo: '{{api_repo}}'
-        dest: '{{api_dest}}'
+        repo: "{{authenticator_repo}}"
+        dest: "{{authenticator_dest}}"
+      when: "inventory_hostname == authenticator_prod_url|string"
       tags:
-        - clone_api
-        - setup_api
+        - update_prod_authenticator
+        - setup_prod_authenticator
 
-    - name: Clone server R scripts
+    - name: Clone staging data api
       git:
-        repo: '{{server_r_scripts_repo}}'
-        dest: '{{server_r_scripts_dest}}'
-      when: 'inventory_hostname == api_staging_url|string'
+        repo: "{{api_repo}}"
+        dest: "{{api_dest}}"
+      when: "inventory_hostname == api_staging_url|string"
       tags:
-        - setup_api
-        - clone_r_scripts
+        - update_staging_api_server
+        - setup_staging_api
 
-    - name: Install R packages
+    - name: Clone prod data api
+      git:
+        repo: "{{api_repo}}"
+        dest: "{{api_dest}}"
+      when: "inventory_hostname == api_prod_url|string"
+      tags:
+        - update_prod_api_server
+        - setup_prod_api
+
+    - name: Clone staging server R scripts
+      git:
+        repo: "{{server_r_scripts_repo}}"
+        dest: "{{server_r_scripts_dest}}"
+      when: "inventory_hostname == api_staging_url|string"
+      tags:
+        - setup_staging_api
+        - update_staging_api_r_scripts
+
+    - name: Clone prod server R scripts
+      git:
+        repo: "{{server_r_scripts_repo}}"
+        dest: "{{server_r_scripts_dest}}"
+      when: "inventory_hostname == api_prod_url|string"
+      tags:
+        - setup_prod_api
+        - update_prod_api_r_scripts
+
+    - name: Install staging server R packages
       command: "Rscript ./R/setup.R"
       args:
         chdir: "{{server_r_scripts_dest}}"
-      when: 'inventory_hostname == api_staging_url|string'
+      when: "inventory_hostname == api_staging_url|string"
       tags:
-        - setup_api
-        - clone_r_scripts
+        - setup_staging_api
+        - update_staging_api_r_packages
 
-    - name: Copy authenticator environment file
+    - name: Install prod server R packages
+      command: "Rscript ./R/setup.R"
+      args:
+        chdir: "{{server_r_scripts_dest}}"
+      when: "inventory_hostname == api_prod_url|string"
+      tags:
+        - setup_prod_api
+        - update_prod_api_r_packages
+
+    - name: Copy authenticator staging environment file
       copy:
-        src: ./config_files/authenticator/.env
-        dest: '{{authenticator_dest}}/.env'
+        src: ./config_files/authenticator/staging/.env
+        dest: "{{authenticator_dest}}/.env"
+      when: "inventory_hostname == authenticator_staging_url|string"
       tags:
-        - copy_env
-        - clone_authenticator
-        - setup_authenticator
-        - clone_authenticator_env
- 
-    - name: Copy api environment file
+        - copy_staging_authenticator_env
+        - setup_staging_authenticator
+        - update_staging_authenticator
+
+    - name: Copy authenticator prod environment file
       copy:
-        src: ./config_files/data_api/.env
-        dest: '{{api_dest}}/.env'
+        src: ./config_files/authenticator/prod/.env
+        dest: "{{authenticator_dest}}/.env"
+      when: "inventory_hostname == authenticator_prod_url|string"
       tags:
-        - copy_env
-        - clone_api
-        - setup_api
-    
-    - name: Install packages based on package.json using the npm
-      npm:
-        path: '{{authenticator_dest}}' 
-        state: present
-      tags:
-        - install_dependencies
-        - setup_authenticator
+        - copy_prod_authenticator_env
+        - setup_prod_authenticator
+        - update_prod_authenticator
 
-    - name: Install packages based on package.json using the npm
-      npm:
-        path: '{{api_dest}}' 
-        state: present
+    - name: Copy api staging environment file
+      copy:
+        src: ./config_files/data_api/staging/.env
+        dest: "{{api_dest}}/.env"
+      when: "inventory_hostname == api_staging_url|string"
       tags:
-        - install_dependencies
-        - setup_api
+        - copy_staging_api_env
+        - setup_staging_api
+        - update_staging_api
 
+    - name: Copy api prod environment file
+      copy:
+        src: ./config_files/data_api/prod/.env
+        dest: "{{api_dest}}/.env"
+      when: "inventory_hostname == api_prod_url|string"
+      tags:
+        - copy_prod_api_env
+        - setup_prod_api
+        - update_prod_api
+
+    - name: Install staging authenticator packages based on package.json using the npm
+      npm:
+        path: "{{authenticator_dest}}"
+        state: present
+      when: "inventory_hostname == authenticator_staging_url|string"
+      tags:
+        - setup_staging_authenticator
+        - update_staging_authenticator
+
+    - name: Install Production authenticator packages based on package.json using the npm
+      npm:
+        path: "{{authenticator_dest}}"
+        state: present
+      when: "inventory_hostname == authenticator_prod_url|string"
+      tags:
+        - setup_prod_authenticator
+        - update_prod_authenticator
+
+    - name: Install packages based on api staging site package.json using the npm
+      npm:
+        path: "{{api_dest}}"
+        state: present
+      when: "inventory_hostname == api_staging_url|string"
+      tags:
+        - setup_staging_api
+        - update_staging_api
+
+    - name: Install packages based on api production site package.json using the npm
+      npm:
+        path: "{{api_dest}}"
+        state: present
+      when: "inventory_hostname == api_prod_url|string"
+      tags:
+        - setup_prod_api
+        - update_prod_api
 
     - name: install Pm2
       command: npm install pm2 -g
       tags:
-        - install_dependencies
-        - setup_api
-        - setup_authenticator
+        - setup_staging_api
+        - setup_prod_api
+        - setup_staging_authenticator
+        - setup_prod_authenticator
 
-    - name: Delete old authenticator pm2 instances
+    - name: Delete old staging authenticator pm2 instances
       become_user: ubuntu
       command: pm2 delete auth-api
+      when: "inventory_hostname == authenticator_staging_url|string"
       ignore_errors: yes
       tags:
-        - start_app
-        - start_authenticator
+        - start_staging_authenticator
+        - update_staging_authenticator
+        - setup_staging_authenticator
 
-
-
-    - name: Start authenticator pm2 instance
+    - name: Start staging authenticator pm2 instance
       become_user: ubuntu
       # command: pm2 start /home/ubuntu/rhomis-authenticator/app.js --name node-app
       command: './node_modules/.bin/cross-env NODE_ENV=production pm2 start ./app.js --name "auth-api"'
+      when: "inventory_hostname == authenticator_staging_url|string"
       args:
-        chdir: '{{authenticator_dest}}'
+        chdir: "{{authenticator_dest}}"
       tags:
-        - start_authenticator
+        - start_staging_authenticator
+        - update_staging_authenticator
+        - setup_staging_authenticator
 
-    
+    - name: Delete old production authenticator pm2 instances
+      become_user: ubuntu
+      command: pm2 delete auth-api
+      when: "inventory_hostname == authenticator_prod_url|string"
+      ignore_errors: yes
+      tags:
+        - start_prod_authenticator
+        - update_prod_authenticator
+        - setup_prod_authenticator
 
+    - name: Start production authenticator pm2 instance
+      become_user: ubuntu
+      command: './node_modules/.bin/cross-env NODE_ENV=production pm2 start ./app.js --name "auth-api"'
+      when: "inventory_hostname == authenticator_prod_url|string"
+      args:
+        chdir: "{{authenticator_dest}}"
+      tags:
+        - start_prod_authenticator
+        - update_prod_authenticator
+        - setup_prod_authenticator
 
-    - name: Delete old api pm2 instances
+    - name: Delete old staging api pm2 instances
       become_user: ubuntu
       command: pm2 delete data-api
       ignore_errors: yes
+      when: "inventory_hostname == api_staging_url|string"
+
       tags:
-        - start_data_api
+        - start_staging_api
+        - update_staging_api
+        - setup_staging_api
 
-
-
-    - name: Start the application
+    - name: Start the staging api application
       become_user: ubuntu
-      # command: pm2 start /home/ubuntu/rhomis-authenticator/app.js --name node-app
       command: './node_modules/.bin/cross-env NODE_ENV=prod pm2 start ./app.js --name "data-api"'
       args:
-        chdir: '{{api_dest}}'
+        chdir: "{{api_dest}}"
+      when: "inventory_hostname == api_staging_url|string"
       tags:
-        - start_data_api
+        - start_staging_api
+        - update_staging_api
+        - setup_staging_api
 
-
-
-#----------------------------------------------------------
-# Setting up NGINX and obtaining certificates
-#----------------------------------------------------------
-
-    - name : Install Python Package
-      apt: 
-        name: python3 
-        state: latest
-        update_cache: yes     
+    - name: Delete old production api pm2 instances
+      become_user: ubuntu
+      command: pm2 delete data-api
+      ignore_errors: yes
+      when: "inventory_hostname == api_prod_url|string"
       tags:
-        - setup_api
-        - setup_authenticator
- 
-    - name : Install Let's Encrypt Package
+        - start_prod_api
+        - update_prod_api
+        - setup_prod_api
+
+    - name: Start the production api application
+      become_user: ubuntu
+      command: './node_modules/.bin/cross-env NODE_ENV=prod pm2 start ./app.js --name "data-api"'
+      args:
+        chdir: "{{api_dest}}"
+      when: "inventory_hostname == api_prod_url|string"
+      tags:
+        - start_prod_api
+        - update_prod_api
+        - setup_prod_api
+
+    #----------------------------------------------------------
+    # Setting up NGINX and obtaining certificates
+    #----------------------------------------------------------
+
+    - name: Install Python Package
       apt:
-        name: "{{ certbot_package }}" 
+        name: python3
+        state: latest
+        update_cache: yes
+      tags:
+        - setup_staging_api
+        - setup_prod_api
+        - setup_staging_authenticator
+        - setup_prod_authenticator
+
+    - name: Install Let's Encrypt Package
+      apt:
+        name: "{{ certbot_package }}"
         update_cache: yes
         state: latest
       tags:
-        - setup_api
-        - setup_authenticator
+        - setup_staging_api
+        - setup_prod_api
+        - setup_staging_authenticator
+        - setup_prod_authenticator
 
     - name: Create and Install Cert for Authenticor Staging Platform Using {{ certbot_plugin }} Plugin
       command: "certbot --{{ certbot_plugin }} -d  {{ inventory_hostname }} -m {{ email }} --agree-tos --noninteractive --redirect"
       tags:
-        - setup_authenticator
-        - setup_api
+        - setup_staging_api
+        - setup_prod_api
+        - setup_staging_authenticator
+        - setup_prod_authenticator
 
     - name: Renew certbot
       command: "certbot renew --cert-name {{inventory_hostname}}"
       tags:
         - renew_certificate
 
-    - name: Renew certbot
+    - name: Renew certbot dry run
       command: "certbot renew --cert-name {{inventory_hostname}} --dry-run"
       tags:
         - renew_certificate_dry_run
-    
+
     - name: Copy nginx template
       copy:
         src: ./config_files/nginx_conf
         dest: /etc/nginx/sites-available/default
       tags:
         - copy_nginx_file
-        - setup_authenticator
-        - setup_api
-            
+        - setup_staging_api
+        - setup_prod_api
+        - setup_staging_authenticator
+        - setup_prod_authenticator
+
     - name: Replace the example domain name
       replace:
         path: /etc/nginx/sites-available/default
@@ -289,8 +428,10 @@
       tags:
         - substitute_domains
         - copy_nginx_file
-        - setup_authenticator
-        - setup_api
+        - setup_staging_api
+        - setup_prod_api
+        - setup_staging_authenticator
+        - setup_prod_authenticator
 
     - name: Replace the port name for the authenticator
       replace:
@@ -301,8 +442,9 @@
       tags:
         - substitute_domains
         - copy_nginx_file
-        - setup_authenticator
-    
+        - setup_staging_authenticator
+        - setup_prod_authenticator
+
     - name: Replace the port name
       replace:
         path: /etc/nginx/sites-available/default
@@ -310,18 +452,18 @@
         replace: "3001"
       when: inventory_hostname == "{{api_staging_url}}"
 
-
       tags:
         - substitute_domains
         - copy_nginx_file
-        - setup_api
-
-
+        - setup_staging_api
+        - setup_prod_api
 
     - name: Restart nginx
       command: "systemctl restart nginx"
       tags:
         - restart_nginx
         - copy_nginx_file
-        - setup_authenticator
-        - setup_api
+        - setup_staging_api
+        - setup_prod_api
+        - setup_staging_authenticator
+        - setup_prod_authenticator
