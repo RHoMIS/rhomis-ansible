@@ -12,10 +12,10 @@ all:
 
     # Production domains
     api.rhomis.cgiar.org:
-      ansible_host: 185.3.95.131
+      ansible_host: 139.162.137.24
       ansible_user: lgorman
     auth.rhomis.cgiar.org:
-      ansible_host: 139.162.137.24
+      ansible_host: 185.3.95.131
       ansible_user: lgorman
     rhomis.cgiar.org:
 
