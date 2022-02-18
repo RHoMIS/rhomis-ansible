@@ -126,6 +126,7 @@
       git:
         repo: "{{authenticator_repo}}"
         dest: "{{authenticator_dest}}"
+        version: staging
       when: "inventory_hostname == authenticator_staging_url|string"
       tags:
         - update_staging_authenticator
@@ -144,6 +145,7 @@
       git:
         repo: "{{api_repo}}"
         dest: "{{api_dest}}"
+        version: staging
       when: "inventory_hostname == api_staging_url|string"
       tags:
         - update_staging_api_server
@@ -162,6 +164,7 @@
       git:
         repo: "{{server_r_scripts_repo}}"
         dest: "{{server_r_scripts_dest}}"
+        version: staging
       when: "inventory_hostname == api_staging_url|string"
       tags:
         - setup_staging_api
