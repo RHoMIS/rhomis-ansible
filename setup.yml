@@ -291,7 +291,7 @@
     - name: Start staging authenticator pm2 instance
       become_user: ubuntu
       # command: pm2 start /home/ubuntu/rhomis-authenticator/app.js --name node-app
-      command: './node_modules/.bin/cross-env NODE_ENV=production pm2 start ./app.js --name "auth-api"'
+      command: './node_modules/.bin/cross-env NODE_ENV=staging pm2 start ./app.js --name "auth-api"'
       when: "inventory_hostname == authenticator_staging_url|string"
       args:
         chdir: "{{authenticator_dest}}"
@@ -334,7 +334,7 @@
 
     - name: Start the staging api application
       become_user: ubuntu
-      command: './node_modules/.bin/cross-env NODE_ENV=prod pm2 start ./app.js --name "data-api"'
+      command: './node_modules/.bin/cross-env NODE_ENV=production pm2 start ./app.js --name "data-api"'
       args:
         chdir: "{{api_dest}}"
       when: "inventory_hostname == api_staging_url|string"
@@ -355,7 +355,7 @@
 
     - name: Start the production api application
       become_user: ubuntu
-      command: './node_modules/.bin/cross-env NODE_ENV=prod pm2 start ./app.js --name "data-api"'
+      command: './node_modules/.bin/cross-env NODE_ENV=production pm2 start ./app.js --name "data-api"'
       args:
         chdir: "{{api_dest}}"
       when: "inventory_hostname == api_prod_url|string"
