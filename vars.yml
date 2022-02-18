@@ -5,17 +5,20 @@ certbot_plugin: "nginx"
 
 # Information for the authenticator server
 authenticator_repo: https://github.com/l-gorman/rhomis-authenticator
-authenticator_dest: /home/ubuntu/rhomis-authenticator
+authenticator_staging_dest: /home/ubuntu/rhomis-authenticator
+authenticator_prod_dest: /home/ubuntu/rhomis-authenticator
+
 authenticator_staging_url: "auth.l-gorman.com"
 authenticator_prod_url: "auth.rhomis.cgiar.org"
 
 # Information for the api repository
 api_repo: https://github.com/l-gorman/rhomis-api
-api_dest: /home/ubuntu/rhomis-data-api
+api_staging_dest: /home/ubuntu/rhomis-data-api
+api_prod_dest: /home/lgorman/rhomis-data-api
 api_staging_url: "api.l-gorman.com"
 api_prod_url: "api.rhomis.cgiar.org"
 
 # Server R-scripts
 server_r_scripts_repo: https://github.com/l-gorman/rhomis-server-R-scripts
-server_r_scripts_dest: /home/ubuntu/rhomis-server-R-scripts
-
+server_r_scripts_staging_dest: /home/ubuntu/rhomis-server-R-scripts
+server_r_scripts_prod_dest: /home/lgorman/rhomis-server-R-scripts

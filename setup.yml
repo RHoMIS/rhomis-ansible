@@ -125,7 +125,7 @@
     - name: Clone staging authenticator api
       git:
         repo: "{{authenticator_repo}}"
-        dest: "{{authenticator_dest}}"
+        dest: "{{authenticator_staging_dest}}"
         version: staging
       when: "inventory_hostname == authenticator_staging_url|string"
       tags:
@@ -135,7 +135,7 @@
     - name: Clone production authenticator api
       git:
         repo: "{{authenticator_repo}}"
-        dest: "{{authenticator_dest}}"
+        dest: "{{authenticator_prod_dest}}"
       when: "inventory_hostname == authenticator_prod_url|string"
       tags:
         - update_prod_authenticator
@@ -144,7 +144,7 @@
     - name: Clone staging data api
       git:
         repo: "{{api_repo}}"
-        dest: "{{api_dest}}"
+        dest: "{{api_staging_dest}}"
         version: staging
       when: "inventory_hostname == api_staging_url|string"
       tags:
@@ -154,7 +154,7 @@
     - name: Clone prod data api
       git:
         repo: "{{api_repo}}"
-        dest: "{{api_dest}}"
+        dest: "{{api_prod_dest}}"
       when: "inventory_hostname == api_prod_url|string"
       tags:
         - update_prod_api_server
@@ -163,8 +163,7 @@
     - name: Clone staging server R scripts
       git:
         repo: "{{server_r_scripts_repo}}"
-        dest: "{{server_r_scripts_dest}}"
-        version: staging
+        dest: "{{server_r_scripts_staging_dest}}"
       when: "inventory_hostname == api_staging_url|string"
       tags:
         - setup_staging_api
@@ -173,7 +172,7 @@
     - name: Clone prod server R scripts
       git:
         repo: "{{server_r_scripts_repo}}"
-        dest: "{{server_r_scripts_dest}}"
+        dest: "{{server_r_scripts_prod_dest}}"
       when: "inventory_hostname == api_prod_url|string"
       tags:
         - setup_prod_api
@@ -182,7 +181,7 @@
     - name: Install staging server R packages
       command: "Rscript ./R/setup.R"
       args:
-        chdir: "{{server_r_scripts_dest}}"
+        chdir: "{{server_r_scripts_staging_dest}}"
       when: "inventory_hostname == api_staging_url|string"
       tags:
         - setup_staging_api
@@ -191,7 +190,7 @@
     - name: Install prod server R packages
       command: "Rscript ./R/setup.R"
       args:
-        chdir: "{{server_r_scripts_dest}}"
+        chdir: "{{server_r_scripts_prod_dest}}"
       when: "inventory_hostname == api_prod_url|string"
       tags:
         - setup_prod_api
@@ -200,7 +199,7 @@
     - name: Copy authenticator staging environment file
       copy:
         src: ./config_files/authenticator/staging/.env
-        dest: "{{authenticator_dest}}/.env"
+        dest: "{{authenticator_staging_dest}}/.env"
       when: "inventory_hostname == authenticator_staging_url|string"
       tags:
         - copy_staging_authenticator_env
@@ -210,7 +209,7 @@
     - name: Copy authenticator prod environment file
       copy:
         src: ./config_files/authenticator/prod/.env
-        dest: "{{authenticator_dest}}/.env"
+        dest: "{{authenticator_prod_dest}}/.env"
       when: "inventory_hostname == authenticator_prod_url|string"
       tags:
         - copy_prod_authenticator_env
@@ -220,7 +219,7 @@
     - name: Copy api staging environment file
       copy:
         src: ./config_files/data_api/staging/.env
-        dest: "{{api_dest}}/.env"
+        dest: "{{api_staging_dest}}/.env"
       when: "inventory_hostname == api_staging_url|string"
       tags:
         - copy_staging_api_env
@@ -230,7 +229,7 @@
     - name: Copy api prod environment file
       copy:
         src: ./config_files/data_api/prod/.env
-        dest: "{{api_dest}}/.env"
+        dest: "{{api_prod_dest}}/.env"
       when: "inventory_hostname == api_prod_url|string"
       tags:
         - copy_prod_api_env
@@ -239,7 +238,7 @@
 
     - name: Install staging authenticator packages based on package.json using the npm
       npm:
-        path: "{{authenticator_dest}}"
+        path: "{{authenticator_staging_dest}}"
         state: present
       when: "inventory_hostname == authenticator_staging_url|string"
       tags:
@@ -248,7 +247,7 @@
 
     - name: Install Production authenticator packages based on package.json using the npm
       npm:
-        path: "{{authenticator_dest}}"
+        path: "{{authenticator_prod_dest}}"
         state: present
       when: "inventory_hostname == authenticator_prod_url|string"
       tags:
@@ -257,7 +256,7 @@
 
     - name: Install packages based on api staging site package.json using the npm
       npm:
-        path: "{{api_dest}}"
+        path: "{{api_staging_dest}}"
         state: present
       when: "inventory_hostname == api_staging_url|string"
       tags:
@@ -266,7 +265,7 @@
 
     - name: Install packages based on api production site package.json using the npm
       npm:
-        path: "{{api_dest}}"
+        path: "{{api_prod_dest}}"
         state: present
       when: "inventory_hostname == api_prod_url|string"
       tags:
@@ -297,7 +296,7 @@
       command: './node_modules/.bin/cross-env NODE_ENV=staging pm2 start ./app.js --name "auth-api"'
       when: "inventory_hostname == authenticator_staging_url|string"
       args:
-        chdir: "{{authenticator_dest}}"
+        chdir: "{{authenticator_staging_dest}}"
       tags:
         - start_staging_authenticator
         - update_staging_authenticator
@@ -318,7 +317,7 @@
       command: './node_modules/.bin/cross-env NODE_ENV=production pm2 start ./app.js --name "auth-api"'
       when: "inventory_hostname == authenticator_prod_url|string"
       args:
-        chdir: "{{authenticator_dest}}"
+        chdir: "{{authenticator_prod_dest}}"
       tags:
         - start_prod_authenticator
         - update_prod_authenticator
@@ -339,7 +338,7 @@
       become_user: ubuntu
       command: './node_modules/.bin/cross-env NODE_ENV=production pm2 start ./app.js --name "data-api"'
       args:
-        chdir: "{{api_dest}}"
+        chdir: "{{api_staging_dest}}"
       when: "inventory_hostname == api_staging_url|string"
       tags:
         - start_staging_api
@@ -360,7 +359,7 @@
       become_user: ubuntu
       command: './node_modules/.bin/cross-env NODE_ENV=production pm2 start ./app.js --name "data-api"'
       args:
-        chdir: "{{api_dest}}"
+        chdir: "{{api_prod_dest}}"
       when: "inventory_hostname == api_prod_url|string"
       tags:
         - start_prod_api
