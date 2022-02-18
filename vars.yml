@@ -6,7 +6,7 @@ certbot_plugin: "nginx"
 # Information for the authenticator server
 authenticator_repo: https://github.com/l-gorman/rhomis-authenticator
 authenticator_staging_dest: /home/ubuntu/rhomis-authenticator
-authenticator_prod_dest: /home/ubuntu/rhomis-authenticator
+authenticator_prod_dest: /home/lgorman/rhomis-authenticator
 
 authenticator_staging_url: "auth.l-gorman.com"
 authenticator_prod_url: "auth.rhomis.cgiar.org"
