@@ -441,7 +441,6 @@
         path: /etc/nginx/sites-available/default
         regexp: EXAMPLEPORT
         replace: "3002"
-      when: inventory_hostname == "{{authenticator_staging_url}}"
       tags:
         - substitute_domains
         - copy_nginx_file
@@ -453,8 +452,6 @@
         path: /etc/nginx/sites-available/default
         regexp: EXAMPLEPORT
         replace: "3001"
-      when: inventory_hostname == "{{api_staging_url}}"
-
       tags:
         - substitute_domains
         - copy_nginx_file
