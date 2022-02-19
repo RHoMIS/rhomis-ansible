@@ -22,3 +22,5 @@ api_prod_url: "api.rhomis.cgiar.org"
 server_r_scripts_repo: https://github.com/l-gorman/rhomis-server-R-scripts
 server_r_scripts_staging_dest: /home/ubuntu/rhomis-server-R-scripts
 server_r_scripts_prod_dest: /home/lgorman/rhomis-server-R-scripts
+
+ansible_shell_allow_world_readable_temp: true
