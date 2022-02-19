@@ -4,6 +4,7 @@
   become: yes
   vars_files:
     - vars.yml
+
   tasks:
     #---------------------------------------------------------
     # Install System Dependencies
@@ -296,14 +297,14 @@
       command: './node_modules/.bin/cross-env NODE_ENV=staging pm2 start ./app.js --name "auth-api"'
       when: "inventory_hostname == authenticator_staging_url|string"
       args:
-        chdir: "{{authenticator_staging_dest}}"
+        chdir: "{{authenticator_dest}}"
       tags:
         - start_staging_authenticator
         - update_staging_authenticator
         - setup_staging_authenticator
 
     - name: Delete old production authenticator pm2 instances
-      become_user: ubuntu
+      become_user: lgorman
       command: pm2 delete auth-api
       when: "inventory_hostname == authenticator_prod_url|string"
       ignore_errors: yes
@@ -313,11 +314,11 @@
         - setup_prod_authenticator
 
     - name: Start production authenticator pm2 instance
-      become_user: ubuntu
+      become_user: lgorman
       command: './node_modules/.bin/cross-env NODE_ENV=production pm2 start ./app.js --name "auth-api"'
       when: "inventory_hostname == authenticator_prod_url|string"
       args:
-        chdir: "{{authenticator_prod_dest}}"
+        chdir: "{{authenticator_dest}}"
       tags:
         - start_prod_authenticator
         - update_prod_authenticator
@@ -338,7 +339,7 @@
       become_user: ubuntu
       command: './node_modules/.bin/cross-env NODE_ENV=production pm2 start ./app.js --name "data-api"'
       args:
-        chdir: "{{api_staging_dest}}"
+        chdir: "{{api_dest}}"
       when: "inventory_hostname == api_staging_url|string"
       tags:
         - start_staging_api
@@ -346,7 +347,7 @@
         - setup_staging_api
 
     - name: Delete old production api pm2 instances
-      become_user: ubuntu
+      become_user: lgorman
       command: pm2 delete data-api
       ignore_errors: yes
       when: "inventory_hostname == api_prod_url|string"
@@ -356,10 +357,10 @@
         - setup_prod_api
 
     - name: Start the production api application
-      become_user: ubuntu
+      become_user: lgorman
       command: './node_modules/.bin/cross-env NODE_ENV=production pm2 start ./app.js --name "data-api"'
       args:
-        chdir: "{{api_prod_dest}}"
+        chdir: "{{api_dest}}"
       when: "inventory_hostname == api_prod_url|string"
       tags:
         - start_prod_api
