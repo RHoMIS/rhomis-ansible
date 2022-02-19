@@ -1,4 +1,7 @@
 ---
+# Email needed for certbot
+email: "leomgorman@outlook.com"
+
 # Dependency for certbot
 certbot_package: "python3-certbot-nginx"
 certbot_plugin: "nginx"
