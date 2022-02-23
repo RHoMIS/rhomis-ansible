@@ -149,7 +149,7 @@
         version: staging
       when: "inventory_hostname == api_staging_url|string"
       tags:
-        - update_staging_api_server
+        - update_staging_api
         - setup_staging_api
 
     - name: Clone prod data api
@@ -158,7 +158,7 @@
         dest: "{{api_prod_dest}}"
       when: "inventory_hostname == api_prod_url|string"
       tags:
-        - update_prod_api_server
+        - update_prod_api
         - setup_prod_api
 
     - name: Clone staging server R scripts
