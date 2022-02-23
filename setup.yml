@@ -337,7 +337,7 @@
 
     - name: Start the staging api application
       become_user: ubuntu
-      command: './node_modules/.bin/cross-env NODE_ENV=production pm2 start ./app.js --name "data-api"'
+      command: './node_modules/.bin/cross-env NODE_ENV=staging pm2 start ./app.js --name "data-api"'
       args:
         chdir: "{{api_staging_dest}}"
       when: "inventory_hostname == api_staging_url|string"
