@@ -194,7 +194,6 @@
 
     - name: Install prod server R packages
       command: "Rscript ./R/setup.R"
-      become_user: lgorman
       args:
         chdir: "{{server_r_scripts_prod_dest}}"
       when: "inventory_hostname == api_prod_url|string"
