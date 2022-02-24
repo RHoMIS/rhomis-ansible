@@ -166,6 +166,7 @@
         repo: "{{server_r_scripts_repo}}"
         dest: "{{server_r_scripts_staging_dest}}"
       when: "inventory_hostname == api_staging_url|string"
+      become_user: ubuntu
       tags:
         - setup_staging_api
         - update_staging_api_r_scripts
@@ -175,6 +176,7 @@
         repo: "{{server_r_scripts_repo}}"
         dest: "{{server_r_scripts_prod_dest}}"
       when: "inventory_hostname == api_prod_url|string"
+      become_user: lgorman
       tags:
         - setup_prod_api
         - update_prod_api_r_scripts
@@ -182,6 +184,7 @@
     - name: Install staging server R packages
       command: "Rscript ./R/setup.R"
       args:
+      become_user: ubuntu
         chdir: "{{server_r_scripts_staging_dest}}"
       when: "inventory_hostname == api_staging_url|string"
       tags:
@@ -191,6 +194,7 @@
     - name: Install prod server R packages
       command: "Rscript ./R/setup.R"
       args:
+      become_user: lgorman
         chdir: "{{server_r_scripts_prod_dest}}"
       when: "inventory_hostname == api_prod_url|string"
       tags:
