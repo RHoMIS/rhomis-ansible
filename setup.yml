@@ -143,6 +143,7 @@
         - setup_prod_authenticator
 
     - name: Clone staging data api
+      become_user: ubuntu
       git:
         repo: "{{api_repo}}"
         dest: "{{api_staging_dest}}"
@@ -153,6 +154,7 @@
         - setup_staging_api
 
     - name: Clone prod data api
+      become_user: lgorman
       git:
         repo: "{{api_repo}}"
         dest: "{{api_prod_dest}}"
@@ -184,7 +186,6 @@
     - name: Install staging server R packages
       command: "Rscript ./R/setup.R"
       become_user: ubuntu
-
       args:
         chdir: "{{server_r_scripts_staging_dest}}"
       when: "inventory_hostname == api_staging_url|string"
@@ -334,7 +335,6 @@
       command: pm2 delete data-api
       ignore_errors: yes
       when: "inventory_hostname == api_staging_url|string"
-
       tags:
         - start_staging_api
         - update_staging_api
