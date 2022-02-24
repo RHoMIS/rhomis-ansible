@@ -185,7 +185,6 @@
 
     - name: Install staging server R packages
       command: "Rscript ./R/setup.R"
-      become_user: ubuntu
       args:
         chdir: "{{server_r_scripts_staging_dest}}"
       when: "inventory_hostname == api_staging_url|string"
