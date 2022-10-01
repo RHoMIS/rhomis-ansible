@@ -1,3 +1,4 @@
 
 # A simple test ansible script
 writeFakeFile.yml
+*.DS_Store
