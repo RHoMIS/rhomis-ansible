@@ -29,6 +29,13 @@
         - nodejs
         - npm
         - gnupg
+        - libfontconfig1-dev
+        - libharfbuzz-dev
+        - libfribidi-dev
+        - libfreetype6-dev
+        - libpng-dev
+        - libtiff5-dev
+        - libjpeg-dev
 
       tags:
         - setup_staging_authenticator
